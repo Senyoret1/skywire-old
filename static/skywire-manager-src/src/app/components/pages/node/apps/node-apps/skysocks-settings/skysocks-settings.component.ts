@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, OnDestroy, ElementRef, Inject } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { MatDialogRef, MatDialog, MatDialogConfig, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 
@@ -24,7 +24,7 @@ import { Application } from 'src/app/app.datatypes';
 export class SkysocksSettingsComponent implements OnInit, OnDestroy {
   @ViewChild('button') button: ButtonComponent;
   @ViewChild('firstInput') firstInput: ElementRef;
-  form: FormGroup;
+  form: UntypedFormGroup;
 
   // True if configuring Vpn-Server, false if configuring Skysocks.
   configuringVpn = false;
@@ -50,8 +50,8 @@ export class SkysocksSettingsComponent implements OnInit, OnDestroy {
   constructor(
     @Inject(MAT_DIALOG_DATA) private data: Application,
     private appsService: AppsService,
-    private formBuilder: FormBuilder,
-    private dialogRef: MatDialogRef<SkysocksSettingsComponent>,
+    private formBuilder: UntypedFormBuilder,
+    public dialogRef: MatDialogRef<SkysocksSettingsComponent>,
     private snackbarService: SnackbarService,
     private dialog: MatDialog,
   ) {
@@ -92,6 +92,13 @@ export class SkysocksSettingsComponent implements OnInit, OnDestroy {
     if (this.operationSubscription) {
       this.operationSubscription.unsubscribe();
     }
+  }
+
+  /**
+   * If true, all the ways provided by default by the UI for closing the modal window are disabled.
+   */
+   get disableDismiss(): boolean {
+    return this.button ? this.button.isLoading : false;
   }
 
   // Used by the checkbox for the secure mode setting.

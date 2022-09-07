@@ -276,10 +276,20 @@ func (r *RPCIngressGateway) Read(req *ReadReq, resp *ReadResp) error {
 		copy(resp.B, buf[:resp.N])
 	}
 	if err != nil {
-		// we don't print warning if the conn is already closed
-		_, ok := r.cm.Get(req.ConnID)
-		if ok {
-			r.log.WithError(err).Warn("Received unexpected error when reading from server.")
+		if err.Error() != io.EOF.Error() {
+			// we don't print warning if the conn is already closed
+			_, ok := r.cm.Get(req.ConnID)
+			if ok {
+				r.log.WithError(err).Warn("Received unexpected error when reading from server.")
+			}
+		}
+	}
+
+	if wrappedConn, ok := conn.(*appnet.WrappedConn); ok {
+		if skywireConn, ok := wrappedConn.Conn.(*appnet.SkywireConn); ok {
+			if ngErr := skywireConn.GetError(); ngErr != nil {
+				err = ngErr
+			}
 		}
 	}
 

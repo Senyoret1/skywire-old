@@ -1,3 +1,4 @@
+// Package skyenv defines variables and constants for different operating systems
 package skyenv
 
 import (
@@ -8,7 +9,6 @@ import (
 	"time"
 
 	"github.com/bitfield/script"
-	"github.com/skycoin/dmsg/pkg/dmsgpty"
 
 	"github.com/skycoin/skywire-utilities/pkg/buildinfo"
 	"github.com/skycoin/skywire-utilities/pkg/cipher"
@@ -35,7 +35,8 @@ const (
 
 // Transport port constants.
 const (
-	TransportPort uint16 = 45 // Listening port of a visor for incoming transports.
+	TransportPort     uint16 = 45 // Listening port of a visor for incoming transports.
+	PublicAutoconnect        = true
 )
 
 // Dmsgpty constants.
@@ -48,11 +49,6 @@ const (
 const (
 	STCPAddr = ":7777"
 )
-
-// DmsgPtyCLIAddr determines CLI address per each platform
-func DmsgPtyCLIAddr() string {
-	return dmsgpty.DefaultCLIAddr()
-}
 
 // Default skywire app constants.
 const (
@@ -116,6 +112,11 @@ const (
 	IPCShutdownMessageType = 68
 )
 
+const (
+	//IsPublic advertises the visor in the service discovery
+	IsPublic = false
+)
+
 // PkgConfig struct contains paths specific to the linux packages
 type PkgConfig struct {
 	Launcher struct {
@@ -145,7 +146,7 @@ func MustPK(pk string) cipher.PubKey {
 	return sPK
 }
 
-//Version gets the version of the installation for the config
+// Version gets the version of the installation for the config
 func Version() string {
 	u := buildinfo.Version()
 	v := u

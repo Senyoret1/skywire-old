@@ -1,6 +1,6 @@
 import { Component, Inject, ViewChild, ElementRef, OnInit, OnDestroy } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogConfig, MatDialog } from '@angular/material/dialog';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
 
 import { SnackbarService } from '../../../../../../services/snackbar.service';
@@ -38,7 +38,7 @@ export class RouterConfigComponent implements OnInit, OnDestroy {
   @ViewChild('button') button: ButtonComponent;
   @ViewChild('firstInput') firstInput: ElementRef;
 
-  form: FormGroup;
+  form: UntypedFormGroup;
 
   private operationSubscription: Subscription;
 
@@ -55,9 +55,9 @@ export class RouterConfigComponent implements OnInit, OnDestroy {
   }
 
   constructor(
-    private dialogRef: MatDialogRef<RouterConfigComponent>,
+    public dialogRef: MatDialogRef<RouterConfigComponent>,
     @Inject(MAT_DIALOG_DATA) private data: RouterConfigParams,
-    private formBuilder: FormBuilder,
+    private formBuilder: UntypedFormBuilder,
     private snackbarService: SnackbarService,
     private routeService: RouteService,
   ) { }
@@ -78,6 +78,13 @@ export class RouterConfigComponent implements OnInit, OnDestroy {
     if (this.operationSubscription) {
       this.operationSubscription.unsubscribe();
     }
+  }
+
+  /**
+   * If true, all the ways provided by default by the UI for closing the modal window are disabled.
+   */
+   get disableDismiss(): boolean {
+    return this.button ? this.button.isLoading : false;
   }
 
   save() {

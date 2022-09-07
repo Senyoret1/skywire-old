@@ -41,7 +41,7 @@ func NewServer(cfg ServerConfig, appCl *app.Client) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error getting default network interface: %w", err)
 	}
-	ifcs, hasMultiple := s.hasMutipleNetworkInterfaces(defaultNetworkIfcs)
+	ifcs, hasMultiple := s.hasMultipleNetworkInterfaces(defaultNetworkIfcs)
 	if hasMultiple {
 		if cfg.NetworkInterface == "" {
 			return nil, fmt.Errorf("multiple default network interfaces detected...set a default one for VPN server or remove one: %v", ifcs)
@@ -74,18 +74,18 @@ func NewServer(cfg ServerConfig, appCl *app.Client) (*Server, error) {
 	fmt.Println("Old IP forwarding values:")
 	fmt.Printf("IPv4: %s, IPv6: %s\n", ipv4ForwardingVal, ipv6ForwardingVal)
 
-	iptablesForwarPolicy, err := GetIPTablesForwardPolicy()
+	iptablesForwardPolicy, err := GetIPTablesForwardPolicy()
 	if err != nil {
 		return nil, fmt.Errorf("error getting iptables forward policy: %w", err)
 	}
 
-	fmt.Printf("Old iptables forward policy: %s\n", iptablesForwarPolicy)
+	fmt.Printf("Old iptables forward policy: %s\n", iptablesForwardPolicy)
 
 	s.defaultNetworkInterface = defaultNetworkIfc
 	s.defaultNetworkInterfaceIPs = defaultNetworkIfcIPs
 	s.ipv4ForwardingVal = ipv4ForwardingVal
 	s.ipv6ForwardingVal = ipv6ForwardingVal
-	s.iptablesForwardPolicy = iptablesForwarPolicy
+	s.iptablesForwardPolicy = iptablesForwardPolicy
 
 	return s, nil
 }
@@ -245,14 +245,20 @@ func (s *Server) serveConn(conn net.Conn) {
 		defer close(connToTunDoneCh)
 
 		if _, err := io.Copy(tun, conn); err != nil {
-			print(fmt.Sprintf("Error resending traffic from VPN client to TUN %s: %v\n", tun.Name(), err))
+			// when the vpn-client is closed we get the error "EOF"
+			if err.Error() != io.EOF.Error() {
+				print(fmt.Sprintf("Error resending traffic from VPN client to TUN %s: %v\n", tun.Name(), err))
+			}
 		}
 	}()
 	go func() {
 		defer close(tunToConnCh)
 
 		if _, err := io.Copy(conn, tun); err != nil {
-			print(fmt.Sprintf("Error resending traffic from TUN %s to VPN client: %v\n", tun.Name(), err))
+			// when the vpn-client is closed we get the error "read tun: file already closed"
+			if err.Error() != "read tun: file already closed" {
+				print(fmt.Sprintf("Error resending traffic from TUN %s to VPN client: %v\n", tun.Name(), err))
+			}
 		}
 	}()
 
@@ -335,7 +341,7 @@ func (s *Server) shakeHands(conn net.Conn) (tunIP, tunGateway net.IP, unsecureVP
 
 	if err := WriteJSON(conn, &sHello); err != nil {
 		unsecureVPN()
-		return nil, nil, nil, fmt.Errorf("error finishing hadnshake: error sending server hello: %w", err)
+		return nil, nil, nil, fmt.Errorf("error finishing handshake: error sending server hello: %w", err)
 	}
 
 	return sTUNIP, sTUNGateway, unsecureVPN, nil
@@ -363,7 +369,7 @@ func (s *Server) sendServerErrHello(conn net.Conn, status HandshakeStatus) {
 	}
 }
 
-func (s *Server) hasMutipleNetworkInterfaces(defaultNetworkInterface string) ([]string, bool) {
+func (s *Server) hasMultipleNetworkInterfaces(defaultNetworkInterface string) ([]string, bool) {
 	networkInterfaces := strings.Split(defaultNetworkInterface, "\n")
 	if len(networkInterfaces) > 1 {
 		return networkInterfaces, true

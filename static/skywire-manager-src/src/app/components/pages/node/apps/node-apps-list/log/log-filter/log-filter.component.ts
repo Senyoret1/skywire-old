@@ -1,5 +1,5 @@
 import { Component, OnInit, Inject, OnDestroy } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 
@@ -31,7 +31,7 @@ export interface LogsFilter {
 })
 export class LogFilterComponent implements OnInit, OnDestroy {
   filters: LogsFilter[];
-  form: FormGroup;
+  form: UntypedFormGroup;
 
   private formSubscription: Subscription;
 
@@ -49,8 +49,8 @@ export class LogFilterComponent implements OnInit, OnDestroy {
 
   constructor(
     @Inject(MAT_DIALOG_DATA) private data: LogsFilter,
-    private dialogRef: MatDialogRef<LogFilterComponent>,
-    private formBuilder: FormBuilder,
+    public dialogRef: MatDialogRef<LogFilterComponent>,
+    private formBuilder: UntypedFormBuilder,
   ) { }
 
   ngOnInit() {
